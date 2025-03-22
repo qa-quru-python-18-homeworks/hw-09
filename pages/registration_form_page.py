@@ -1,37 +1,27 @@
+from datetime import datetime
+
 from selene import have, be, command
 from selene.support.shared import browser
 from selene.support.shared.jquery_style import s
 
+from models.student import StudentSubmittedView
+
 
 class RegistrationFormPage:
-    def fill_form(
-            self,
-            first_name,
-            last_name,
-            email,
-            gender,
-            mobile,
-            date_of_birth,
-            subjects,
-            hobbies,
-            picture,
-            address,
-            state,
-            city
-    ):
+    def fill_form(self, student):
         self.__open_page() \
-            .__set_first_name(first_name) \
-            .__set_last_name(last_name) \
-            .__set_email(email) \
-            .__select_gender(gender) \
-            .__set_mobile_number(mobile) \
-            .__set_birth_date(*date_of_birth) \
-            .__add_subjects(subjects) \
-            .__select_hobbies(hobbies) \
-            .__upload_picture(picture) \
-            .__set_current_address(address) \
-            .set_state(state) \
-            .__set_city(city) \
+            .__set_first_name(student.first_name) \
+            .__set_last_name(student.last_name) \
+            .__set_email(student.email) \
+            .__select_gender(student.gender) \
+            .__set_mobile_number(student.mobile_number) \
+            .__set_birth_date(student.birth_date) \
+            .__add_subjects(student.subjects) \
+            .__select_hobbies(student.hobbies) \
+            .__upload_picture(student.picture) \
+            .__set_current_address(student.address) \
+            .__set_state(student.state) \
+            .__set_city(student.city) \
             .__submit()
         return self
 
@@ -64,7 +54,10 @@ class RegistrationFormPage:
         s('#userNumber').type(value)
         return self
 
-    def __set_birth_date(self, day: int, month: int, year: int):
+    def __set_birth_date(self, birth_date):
+        date_obj = datetime.strptime(birth_date, "%d %B %Y")
+        day, month, year = date_obj.day, date_obj.month - 1, date_obj.year
+
         s('#dateOfBirthInput').click()
         s('.react-datepicker__month-select').element(f'option[value="{month}"]').click()
         s('.react-datepicker__year-select').element(f'option[value="{year}"]').click()
@@ -95,7 +88,7 @@ class RegistrationFormPage:
         s('#currentAddress').type(value)
         return self
 
-    def set_state(self, state_name):
+    def __set_state(self, state_name):
         s('#state').click()
         s('#react-select-3-input').type(state_name).press_enter()
         return self
@@ -113,28 +106,18 @@ class RegistrationFormPage:
         s('#closeLargeModal').perform(command.js.click)
         return self
 
-    def should_have_submitted(
-            self,
-            student_name,
-            student_email,
-            gender,
-            mobile,
-            date_of_birth,
-            subjects,
-            hobbies,
-            picture,
-            address,
-            state_and_city
-    ):
+    def should_have_submitted(self, student):
+        student_submitted_view = StudentSubmittedView(student)
+
         s('.modal-content').should(be.visible)
-        s('table tbody tr:nth-of-type(1) td:nth-of-type(2)').should(have.text(student_name))
-        s('table tbody tr:nth-of-type(2) td:nth-of-type(2)').should(have.text(student_email))
-        s('table tbody tr:nth-of-type(3) td:nth-of-type(2)').should(have.text(gender))
-        s('table tbody tr:nth-of-type(4) td:nth-of-type(2)').should(have.text(mobile))
-        s('table tbody tr:nth-of-type(5) td:nth-of-type(2)').should(have.text(date_of_birth))
-        s('table tbody tr:nth-of-type(6) td:nth-of-type(2)').should(have.text(subjects))
-        s('table tbody tr:nth-of-type(7) td:nth-of-type(2)').should(have.text(hobbies))
-        s('table tbody tr:nth-of-type(8) td:nth-of-type(2)').should(have.text(picture))
-        s('table tbody tr:nth-of-type(9) td:nth-of-type(2)').should(have.text(address))
-        s('table tbody tr:nth-of-type(10) td:nth-of-type(2)').should(have.text(state_and_city))
+        s('table tbody tr:nth-of-type(1) td:nth-of-type(2)').should(have.text(student_submitted_view.name))
+        s('table tbody tr:nth-of-type(2) td:nth-of-type(2)').should(have.text(student_submitted_view.email))
+        s('table tbody tr:nth-of-type(3) td:nth-of-type(2)').should(have.text(student_submitted_view.gender))
+        s('table tbody tr:nth-of-type(4) td:nth-of-type(2)').should(have.text(student_submitted_view.mobile_number))
+        s('table tbody tr:nth-of-type(5) td:nth-of-type(2)').should(have.text(student_submitted_view.birth_date))
+        s('table tbody tr:nth-of-type(6) td:nth-of-type(2)').should(have.text(student_submitted_view.subjects))
+        s('table tbody tr:nth-of-type(7) td:nth-of-type(2)').should(have.text(student_submitted_view.hobbies))
+        s('table tbody tr:nth-of-type(8) td:nth-of-type(2)').should(have.text(student_submitted_view.picture))
+        s('table tbody tr:nth-of-type(9) td:nth-of-type(2)').should(have.text(student_submitted_view.address))
+        s('table tbody tr:nth-of-type(10) td:nth-of-type(2)').should(have.text(student_submitted_view.state_and_city))
         self.__close_modal()
